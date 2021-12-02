@@ -2,18 +2,30 @@ import pygame
 from pygame import display as display
 from pygame import draw as draw
 from pygame import event as event
-#import life
+import life
 import sys
 
-fieldDimension = 10
+def drawFieldOnSurface(surface, field):
+    for cell in field.cells:
+        r = (cell.x * cell_size, cell.y * cell_size, cell_size, cell_size)
+        cellColor = azure2
+        if cell.isAlive:
+            cellColor = blueviolet
+        draw.rect(surface, cellColor, r, 0)
+        
+
+
+
+fieldDimension = 30
 startPopulationList = [2,5,6,9,10]
 
 #print('init life')
 
-#myLife = life.Life(fieldDimension)
+myLife = life.Life(fieldDimension)
 #print(life.fieldDimension())
 #myLife.printField(myLife.field)
 #myLife.populateField(startPopulationList)
+myLife.populateAllField()
 
 screen_height = 480
 screen_width = 480
@@ -32,17 +44,20 @@ if display.get_init():
     
     screen.fill(azure2, )
     
-#    for cell in myLife.field.cells:
-#        if cell.isAlive:
-#            r = (cell.x * cell_size, cell.y * cell_size, cell_size, cell_size)
-#            draw.rect(screen, blueviolet, r, 0)
-
-    #display.update(r)
+    drawFieldOnSurface(screen, myLife.field)
     display.flip()
-
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 display.quit()
                 sys.exit()
+            elif event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_SPACE:
+                    stateAlives, statehash = myLife.calcStateOfField()
+
+                    drawFieldOnSurface(screen, myLife.field)
+                    display.flip()
+                   
+

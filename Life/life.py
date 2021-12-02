@@ -99,12 +99,12 @@ class Life:
     def calcStateOfField(self):
         aliveCount = 0
         stateForHash = []
-        for cell in self.field:
+        for cell in self.field.cells:
             neighbors = self.getNeighbors(cell.x, cell.y)
 
             neighborsCount = 0
             for neighbor in neighbors:
-                if self.field[neighbor].isAlive:
+                if self.field.cells[neighbor].isAlive:
                     neighborsCount = neighborsCount + 1
 
             if cell.isAlive:
@@ -138,6 +138,12 @@ class Life:
         for populationIndex in populationList:
             #print(populationIndex)
             self.field.cells[populationIndex].isAlive = True
+        pass
+    #end def
+
+    def populateAllField(self):
+        for cell in self.field.cells:
+            cell.isAlive = True
         pass
     #end def
 
