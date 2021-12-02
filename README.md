@@ -1,6 +1,15 @@
 # life
 Conway`s game of Life interpretation 
 
+Install python 3.7.4 on your system
+Download all files and decompress in a folder
+	
+pip install -r requirements.txt
+
+Run game:
+	python life.py
+
+
 Исходные правила игры:
 
  - поле - это матрица размерностью N
