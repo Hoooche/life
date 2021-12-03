@@ -91,24 +91,38 @@ class SquadField:
 
     def calc_state(self):
         self.__alives = 0
-        stateForHash = []
+        state_for_hash = []
+        calculated_cells = []
+
         for cell in self.cells:
-            neighborsCount = 0
+
+            # lets count alive neighbors
+            neighbors_count = 0
             for neighbor in cell.neighbors:
                 if self.cells[neighbor].is_alive:
-                    neighborsCount = neighborsCount + 1
+                    neighbors_count = neighbors_count + 1
+            
+            # checking conditions to get new cell statement
+            new_state = cell.is_alive
+            if (new_state and not neighbors_count in [2,3]) or (not new_state and neighbors_count == 3):
+                new_state = not new_state
 
-            if cell.is_alive:
-                if not neighborsCount in [2,3]:
-                    cell.is_alive = False
-            else:
-                if neighborsCount == 3:
-                    cell.is_alive = True
+            # gather params that has influence on hash
+            state_for_hash.append(new_state)
 
-            if cell.is_alive: self.__alives = self.__alives + 1
-            stateForHash.append(cell.is_alive)
+            # appends new cell statement to List
+            if new_state != cell.is_alive:
+                calculated_cells.append(Cell(new_state, cell.index, self.__dimension))    
 
-        self.__hash = hash(tuple(stateForHash))
+            if new_state:
+                self.__alives = self.__alives + 1
+
+        # updates new state of field for calculated cells only
+        for cell in calculated_cells:
+            self.cells[cell.index].is_alive = cell.is_alive
+
+        # count new hash of field
+        self.__hash = hash(tuple(state_for_hash))
         return self.__alives, self.__hash
         pass
     #end def
@@ -153,7 +167,7 @@ if __name__ == '__main__':
     # R - pentamino for dimension 10
     startPopulationList = [34,44,45,53,54]
     # R - glider for dimension 10
-    startPopulationList = [1,12,20,21,22]
+    #startPopulationList = [1,12,20,21,22]
 
     print('init life')
 

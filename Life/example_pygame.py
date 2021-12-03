@@ -22,6 +22,8 @@ startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
 fieldDimension = 10
 # R - pentamino for dimension 10
 startPopulationList = [34,44,45,53,54]
+# R - glider for dimension 10
+#startPopulationList = [1,12,20,21,22]
 
 #print('init life')
 
