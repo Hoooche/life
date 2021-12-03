@@ -32,6 +32,34 @@ class Cell:
         self.y = index // y_field_dimension
         self.x = index - self.y * x_field_dimension
 
+        x_left = self.x - 1
+        if x_left < 0:
+            x_left = x_field_dimension-1
+
+        x_right = self.x + 1
+        if x_right == x_field_dimension:
+            x_right = 0
+
+        y_up = self.y - 1
+        if y_up < 0:
+            y_up = y_field_dimension-1
+
+        y_down = self.y + 1
+        if y_down == y_field_dimension:
+            y_down = 0
+
+        self.neighbors = []
+        self.neighbors.append(y_up * y_field_dimension + x_left)
+        self.neighbors.append(y_up * y_field_dimension + self.x)
+        self.neighbors.append(y_up * y_field_dimension + x_right)
+
+        self.neighbors.append(self.y * y_field_dimension + x_left)
+        self.neighbors.append(self.y * y_field_dimension + x_right)
+
+        self.neighbors.append(y_down * y_field_dimension + x_left)
+        self.neighbors.append(y_down * y_field_dimension + self.x)
+        self.neighbors.append(y_down * y_field_dimension + x_right)
+       
 
 class SquadField:
     __startPopulationList = []
@@ -55,49 +83,18 @@ class SquadField:
     def get_hash(self):
         return self.__hash
 
-    # return array of indexes 
+    # return array of neighbors indexes 
     def get_neighbors(self, x, y):
         fieldDimension = self.get_dimension()
-        neighbors = []
-
-        xLeft = x - 1
-        if xLeft < 0:
-            xLeft = fieldDimension-1
-
-        xRight = x + 1
-        if xRight == fieldDimension:
-            xRight = 0
-
-        yUp = y - 1
-        if yUp < 0:
-            yUp = fieldDimension-1
-
-        yDown = y + 1
-        if yDown == fieldDimension:
-            yDown = 0
-
-        neighbors.append(yUp * fieldDimension + xLeft)
-        neighbors.append(yUp * fieldDimension + x)
-        neighbors.append(yUp * fieldDimension + xRight)
-
-        neighbors.append(y * fieldDimension + xLeft)
-        neighbors.append(y * fieldDimension + xRight)
-
-        neighbors.append(yDown * fieldDimension + xLeft)
-        neighbors.append(yDown * fieldDimension + x)
-        neighbors.append(yDown * fieldDimension + xRight)
-
-        return neighbors
+        return self.cells[y * fieldDimension + x].neighbors
     #end def
 
     def calc_state(self):
         self.__alives = 0
         stateForHash = []
         for cell in self.cells:
-            neighbors = self.get_neighbors(cell.x, cell.y)
-
             neighborsCount = 0
-            for neighbor in neighbors:
+            for neighbor in cell.neighbors:
                 if self.cells[neighbor].is_alive:
                     neighborsCount = neighborsCount + 1
 
@@ -116,16 +113,21 @@ class SquadField:
         pass
     #end def
 
-    def print(self):
+    def print(self, show_index = False):
         field = self
-        if field.get_dimension() != 0:
+        dimension = field.get_dimension()
+        dimension_str_len = len(str(dimension))
+        if dimension != 0:
             for i in field.cells:
-                if i.is_alive:
-                    print('+', end=' ')
+                if show_index:
+                    print('{0:0{width}}'.format(i.index, width=dimension_str_len), end=' ')
                 else:
-                    print('0', end=' ')
+                    if i.is_alive:
+                        print('+', end=' ')
+                    else:
+                        print('0', end=' ')
 
-                if (i.index + 1) % (field.get_dimension()) == 0:
+                if (i.index + 1) % (dimension) == 0:
                     print(end = '\n')
         pass
     #end def
@@ -145,31 +147,39 @@ class SquadField:
 
 if __name__ == '__main__':
 
-    fieldDimension = 5
-    startPopulationList = [2,5,6,7,9,10,12,17,18,20]
+    fieldDimension = 10
+    #startPopulationList = [2,5,6,7,9,10,12,17,18,20]
+
+    # R - pentamino for dimension 10
+    startPopulationList = [34,44,45,53,54]
+    # R - glider for dimension 10
+    startPopulationList = [1,12,20,21,22]
 
     print('init life')
 
     field = SquadField(fieldDimension)
-    print(field.get_dimension())
-    field.print()
-    
+    print('dimension: ' , field.get_dimension())
+    field.print(True) 
     print('populate field')
-    field.populate(startPopulationList)
-    field.print()
-
-    #print(life.field.cells[2].x,life.field.cells[2].y)
-
-    '''
-    print(get_neighbors(0,0, field))
-    print(get_neighbors(2,2, field))
-    print(get_neighbors(0,2, field))
-    print(get_neighbors(2,0, field))
-    '''
-    
+     
     print("state 0")
     field.populate(startPopulationList)
     field.print()
+
+    print(field.get_neighbors(0,0))
+    print(field.get_neighbors(1,0))    
+    print(field.get_neighbors(2,2))    
+    print(field.get_neighbors(0,1))    
+    print(field.get_neighbors(0,2))    
+
+    '''
+    [99, 90, 91, 9, 1, 19, 10, 11]
+    [90, 91, 92, 0, 2, 10, 11, 12]
+    [11, 12, 13, 21, 23, 31, 32, 33]
+    [9, 0, 1, 19, 11, 29, 20, 21]
+    [19, 10, 11, 29, 21, 39, 30, 31]
+    '''
+    #exit()
 
     states = []
     circleOfLife = True

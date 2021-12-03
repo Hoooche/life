@@ -19,6 +19,10 @@ def drawFieldOnSurface(surface, field):
 fieldDimension = 5
 startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
 
+fieldDimension = 10
+# R - pentamino for dimension 10
+startPopulationList = [34,44,45,53,54]
+
 #print('init life')
 
 myLifeField = life.SquadField(fieldDimension)
