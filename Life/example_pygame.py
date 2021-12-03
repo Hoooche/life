@@ -17,14 +17,23 @@ def drawFieldOnSurface(surface, field):
 
 
 fieldDimension = 5
-startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
+#startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
 
 fieldDimension = 10
 # R - pentamino for dimension 10
-startPopulationList = [34,44,45,53,54]
+#startPopulationList = [34,44,45,53,54]
 # R - glider for dimension 10
 #startPopulationList = [1,12,20,21,22]
 
+fieldDimension = 80
+# R - pentamino for dimension 80
+startPopulationList = [38*80+39, 39*80+39, 39*80+40, 40*80+38, 40*80 +39]
+
+fieldDimension = 480
+halfDimension = int(fieldDimension/2)
+# R - pentamino for dimension 80
+startPopulationList = [((halfDimension-1)*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension+1), ((halfDimension+1)*fieldDimension+halfDimension-1), ((halfDimension+1)*fieldDimension+halfDimension)]
+print(startPopulationList)
 #print('init life')
 
 myLifeField = life.SquadField(fieldDimension)
