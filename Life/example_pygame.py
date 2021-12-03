@@ -9,23 +9,21 @@ def drawFieldOnSurface(surface, field):
     for cell in field.cells:
         r = (cell.x * cell_size, cell.y * cell_size, cell_size, cell_size)
         cellColor = azure2
-        if cell.isAlive:
+        if cell.is_alive:
             cellColor = blueviolet
         draw.rect(surface, cellColor, r, 0)
         
 
 
 
-fieldDimension = 30
-startPopulationList = [2,5,6,9,10]
+fieldDimension = 5
+startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
 
 #print('init life')
 
-myLife = life.Life(fieldDimension)
-#print(life.fieldDimension())
-#myLife.printField(myLife.field)
-#myLife.populateField(startPopulationList)
-myLife.populateAllField()
+myLifeField = life.SquadField(fieldDimension)
+myLifeField.populate(startPopulationList)
+#myLifeField.populate_all()
 
 screen_height = 480
 screen_width = 480
@@ -44,7 +42,7 @@ if display.get_init():
     
     screen.fill(azure2, )
     
-    drawFieldOnSurface(screen, myLife.field)
+    drawFieldOnSurface(screen, myLifeField)
     display.flip()
 
     while True:
@@ -55,9 +53,9 @@ if display.get_init():
             elif event.type == pygame.KEYDOWN:
 
                 if event.key == pygame.K_SPACE:
-                    stateAlives, statehash = myLife.calcStateOfField()
+                    stateAlives, statehash = myLifeField.calc_state()
 
-                    drawFieldOnSurface(screen, myLife.field)
+                    drawFieldOnSurface(screen, myLifeField)
                     display.flip()
                    
 
