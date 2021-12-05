@@ -32,46 +32,74 @@ class Cell:
         self.y = index // y_field_dimension
         self.x = index - self.y * x_field_dimension
 
-        x_left = self.x - 1
+        self.neighbors = self.get_neighbors_by_index(index, x_field_dimension, y_field_dimension)
+    #end def
+
+    @staticmethod 
+    def get_coords_by_index(index, x_field_dimension, y_field_dimension = 0):       
+        if y_field_dimension == 0:
+            y_field_dimension = x_field_dimension
+
+        y = index // y_field_dimension
+        x = index - y * x_field_dimension
+        return x, y
+    #end def
+
+    @staticmethod 
+    def get_neighbors_by_index(index, x_field_dimension, y_field_dimension = 0):       
+        if y_field_dimension == 0:
+            y_field_dimension = x_field_dimension
+        
+        x, y = Cell.get_coords_by_index(index, x_field_dimension, y_field_dimension)
+
+        x_left = x - 1
         if x_left < 0:
             x_left = x_field_dimension-1
 
-        x_right = self.x + 1
+        x_right = x + 1
         if x_right == x_field_dimension:
             x_right = 0
 
-        y_up = self.y - 1
+        y_up = y - 1
         if y_up < 0:
             y_up = y_field_dimension-1
 
-        y_down = self.y + 1
+        y_down = y + 1
         if y_down == y_field_dimension:
             y_down = 0
 
-        self.neighbors = []
-        self.neighbors.append(y_up * y_field_dimension + x_left)
-        self.neighbors.append(y_up * y_field_dimension + self.x)
-        self.neighbors.append(y_up * y_field_dimension + x_right)
+        neighbors = []
+        neighbors.append(y_up * y_field_dimension + x_left)
+        neighbors.append(y_up * y_field_dimension + x)
+        neighbors.append(y_up * y_field_dimension + x_right)
 
-        self.neighbors.append(self.y * y_field_dimension + x_left)
-        self.neighbors.append(self.y * y_field_dimension + x_right)
+        neighbors.append(y * y_field_dimension + x_left)
+        neighbors.append(y * y_field_dimension + x_right)
 
-        self.neighbors.append(y_down * y_field_dimension + x_left)
-        self.neighbors.append(y_down * y_field_dimension + self.x)
-        self.neighbors.append(y_down * y_field_dimension + x_right)
-       
+        neighbors.append(y_down * y_field_dimension + x_left)
+        neighbors.append(y_down * y_field_dimension + x)
+        neighbors.append(y_down * y_field_dimension + x_right)
+
+        return neighbors
+    #end def
+#end class
 
 class SquadField:
     __startPopulationList = []
     __dimension = 0
     __alives = 0
     __hash = 0
-    cells = []
-
-    def __init__(self, dimension):
+    # alive cells
+    cells = {}
+    tuple_cells = []
+    def __init__(self, dimension, start_position = []):
         self.__dimension = dimension
-        for i in range(dimension*dimension):
-            self.cells.append(Cell(False, i, dimension))
+        #for i in range(dimension*dimension):
+        #    self.cells.append(Cell(False, i, dimension))
+
+        # we'll store only alives
+        for i in start_position:
+            self.cells[i] = Cell(True, i, dimension)    
     #end def
 
     def get_dimension(self):
@@ -83,48 +111,96 @@ class SquadField:
     def get_hash(self):
         return self.__hash
 
-    # return array of neighbors indexes 
+    # return array of neighbors indexes by (x,y)
     def get_neighbors(self, x, y):
-        fieldDimension = self.get_dimension()
-        return self.cells[y * fieldDimension + x].neighbors
+
+        field_dimension = self.get_dimension()
+        index = y * field_dimension + x
+        neighbors = self.get_neighbors_by_index(self, index)
+
+        return neighbors
+    #end def
+
+    # return array of neighbors indexes by (index)
+    def get_neighbors_by_index(self, index):
+        neighbors = []
+        cell = self.cells.get(index, None)
+        if cell == None:
+            neighbors = Cell.get_neighbors_by_index(index, self.__dimension)
+        else:
+            neighbors = cell.neighbors
+        
+        return neighbors
     #end def
 
     def calc_state(self):
-        self.__alives = 0
-        state_for_hash = []
+
+        new_state_cells = {}
         calculated_cells = []
 
-        for cell in self.cells:
+        current_state_keys = self.cells.keys()
 
-            # lets count alive neighbors
-            neighbors_count = 0
-            for neighbor in cell.neighbors:
-                if self.cells[neighbor].is_alive:
-                    neighbors_count = neighbors_count + 1
+        for i, cell in self.cells.items():
+
+            cell_indexes = self.get_neighbors_by_index(i).copy()
+            cell_indexes.append(i)
+
+            for index in cell_indexes:
+
+                if index in calculated_cells:
+                    continue
+  
+                neighbors = self.get_neighbors_by_index(index)
+
+                # lets count alive neighbors
+                alive_neighbors_count = list(set(neighbors) & set(current_state_keys)).__len__()
             
-            # checking conditions to get new cell statement
-            new_state = cell.is_alive
-            if (new_state and not neighbors_count in [2,3]) or (not new_state and neighbors_count == 3):
-                new_state = not new_state
+                # checking conditions to get new cell statement            
+                new_state = index in current_state_keys
 
-            # gather params that has influence on hash
-            state_for_hash.append(new_state)
+                if (new_state and not alive_neighbors_count in [2,3]) or (not new_state and alive_neighbors_count == 3):
+                    new_state = not new_state
 
-            # appends new cell statement to List
-            if new_state != cell.is_alive:
-                calculated_cells.append(Cell(new_state, cell.index, self.__dimension))    
+                if new_state:
+                    # create new object Cell with new statements, here we can modify values of some properties 
+                    new_state_cells[index] = Cell(True, index, self.__dimension)
 
-            if new_state:
-                self.__alives = self.__alives + 1
+                calculated_cells.append(index)
 
-        # updates new state of field for calculated cells only
-        for cell in calculated_cells:
-            self.cells[cell.index].is_alive = cell.is_alive
-
-        # count new hash of field
-        self.__hash = hash(tuple(state_for_hash))
-        return self.__alives, self.__hash
+        return new_state_cells
         pass
+    #end def
+
+    def calc_state_hash(self):
+        # to get correct hash sort is needed 
+        # hash is calculating only for property 'is_alive'
+        state_keys = list(self.cells.keys())
+        state_keys.sort()
+        return tuple(state_keys).__hash__()
+    #end def
+
+    def apply_state(self, new_state_cells):
+        changed_keys = []
+
+        old_hash = self.__hash
+        self.__hash = self.calc_state_hash()
+        
+        if old_hash != self.__hash:
+            new_state_keys = list(new_state_cells.keys())
+            self.__alives = new_state_keys.__len__()
+
+            current_state_keys = list(self.cells.keys())
+            changed_keys = list(set(current_state_keys + new_state_keys))
+
+            # delete cells 
+            for i in list(set(current_state_keys) - set(new_state_keys)):
+                self.cells.pop(i)
+
+            for i, cell in new_state_cells.items():
+                # TO DO: no need to use new cell ref if cell already exists, check needed
+                self.cells[i] = cell
+
+        return changed_keys
     #end def
 
     def print(self, show_index = False):
@@ -132,59 +208,57 @@ class SquadField:
         dimension = field.get_dimension()
         dimension_str_len = len(str(dimension))
         if dimension != 0:
-            for i in field.cells:
+            for i in range(dimension*dimension):
                 if show_index:
-                    print('{0:0{width}}'.format(i.index, width=dimension_str_len), end=' ')
+                    print('{0:0{width}}'.format(i, width=dimension_str_len), end=' ')
                 else:
-                    if i.is_alive:
-                        print('+', end=' ')
-                    else:
+                    # if we found any cell in cells by index, that means it is alive
+                    alive_cell = field.cells.get(i) 
+                    if alive_cell == None:
                         print('0', end=' ')
+                    else:
+                        print('+', end=' ')
 
-                if (i.index + 1) % (dimension) == 0:
+                if (i + 1) % (dimension) == 0:
                     print(end = '\n')
         pass
     #end def
 
-    def populate(self, populationList):
-        for populationIndex in populationList:
-            #print(populationIndex)
-            self.cells[populationIndex].is_alive = True
+    def populate(self, population_list):
+        dimension = self.get_dimension()
+        self.cells.clear()
+        for i in population_list:
+            self.cells[i]= Cell(True, i, dimension)
         pass
     #end def
-
-    def populate_all(self):
-        for cell in self.cells:
-            cell.is_alive = True
-        pass
-    #end def
+#end class
 
 if __name__ == '__main__':
-
-    fieldDimension = 10
-    #startPopulationList = [2,5,6,7,9,10,12,17,18,20]
+    
+    field_dimension = 10
+    #start_population_list = [2,5,6,7,9,10,12,17,18,20]
 
     # R - pentamino for dimension 10
-    startPopulationList = [34,44,45,53,54]
+    start_population_list = [34,44,45,53,54]
     # R - glider for dimension 10
-    #startPopulationList = [1,12,20,21,22]
+    start_population_list = [1,12,20,21,22]
 
     print('init life')
 
-    field = SquadField(fieldDimension)
+    field = SquadField(field_dimension)
     print('dimension: ' , field.get_dimension())
     field.print(True) 
     print('populate field')
      
     print("state 0")
-    field.populate(startPopulationList)
+    field.populate(start_population_list)
     field.print()
 
-    print(field.get_neighbors(0,0))
-    print(field.get_neighbors(1,0))    
-    print(field.get_neighbors(2,2))    
-    print(field.get_neighbors(0,1))    
-    print(field.get_neighbors(0,2))    
+    #print(field.get_neighbors(0,0))
+    #print(field.get_neighbors(1,0))    
+    #print(field.get_neighbors(2,2))    
+    #print(field.get_neighbors(0,1))    
+    #print(field.get_neighbors(0,2))    
 
     '''
     [99, 90, 91, 9, 1, 19, 10, 11]
@@ -193,23 +267,23 @@ if __name__ == '__main__':
     [9, 0, 1, 19, 11, 29, 20, 21]
     [19, 10, 11, 29, 21, 39, 30, 31]
     '''
-    #exit()
 
     states = []
     circleOfLife = True
 
     while circleOfLife:
-        alives, hashValue = field.calc_state()
+        new_state = field.calc_state()
+        field.apply_state(new_state)        
         print('----------')
-        print(alives, hashValue)
+        print(field.get_alives(), field.get_hash())
         field.print()
-        if not (alives > 0 and states.count(hashValue) == 0):
+        if not (field.get_alives() > 0 and states.count(field.get_hash()) == 0):
             circleOfLife = False
 
-        states.append(hashValue)
+        states.append(field.get_hash())
         pass
 
     print('----------')
     print('Count od states: ', len(states))
-    print('Population: ', alives)
+    print('Population: ', field.get_alives())
 
