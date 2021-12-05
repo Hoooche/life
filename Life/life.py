@@ -114,48 +114,50 @@ class SquadField:
     # return array of neighbors indexes by (x,y)
     def get_neighbors(self, x, y):
 
-        field_dimension = self.get_dimension()
+        field_dimension = self.__dimension
         index = y * field_dimension + x
         neighbors = self.get_neighbors_by_index(self, index)
 
         return neighbors
     #end def
 
-    # return array of neighbors indexes by (index)
-    def get_neighbors_by_index(self, index):
-        neighbors = []
+    # return value - set - of neighbors indexes by (index)
+    def get_neighbors_by_index(self, index, include_index = False):
+        neighbors = set()
         cell = self.cells.get(index, None)
         if cell == None:
-            neighbors = Cell.get_neighbors_by_index(index, self.__dimension)
+            neighbors = set(Cell.get_neighbors_by_index(index, self.__dimension))
         else:
-            neighbors = cell.neighbors
+            neighbors = set(cell.neighbors)
         
+        if include_index:
+            neighbors.add(index)
+
         return neighbors
     #end def
 
+    # return value - dict - {index : cell}
     def calc_state(self):
 
         new_state_cells = {}
-        calculated_cells = []
+        calculated_cells = set()
 
-        current_state_keys = self.cells.keys()
-
+        current_state_keys = set(self.cells.keys())
         for i, cell in self.cells.items():
 
-            cell_indexes = self.get_neighbors_by_index(i).copy()
-            cell_indexes.append(i)
+            cell_indexes = self.get_neighbors_by_index(i, True)
+            for index in (cell_indexes - calculated_cells):
 
-            for index in cell_indexes:
-
-                if index in calculated_cells:
-                    continue
+                #if index in calculated_cells:
+                #    continue
   
                 neighbors = self.get_neighbors_by_index(index)
 
                 # lets count alive neighbors
-                alive_neighbors_count = list(set(neighbors) & set(current_state_keys)).__len__()
+                alive_neighbors_count = (neighbors & current_state_keys).__len__()
             
-                # checking conditions to get new cell statement            
+                # checking conditions to get new cell statement
+                # TO DO need optimization            
                 new_state = index in current_state_keys
 
                 if (new_state and not alive_neighbors_count in [2,3]) or (not new_state and alive_neighbors_count == 3):
@@ -165,12 +167,13 @@ class SquadField:
                     # create new object Cell with new statements, here we can modify values of some properties 
                     new_state_cells[index] = Cell(True, index, self.__dimension)
 
-                calculated_cells.append(index)
+                calculated_cells.add(index)
 
         return new_state_cells
         pass
     #end def
 
+    # return value - int
     def calc_state_hash(self):
         # to get correct hash sort is needed 
         # hash is calculating only for property 'is_alive'
@@ -179,23 +182,24 @@ class SquadField:
         return tuple(state_keys).__hash__()
     #end def
 
+    # return value - set - indexes that was changed
     def apply_state(self, new_state_cells):
-        changed_keys = []
+        changed_keys = set()
 
         old_hash = self.__hash
         self.__hash = self.calc_state_hash()
         
         if old_hash != self.__hash:
-            new_state_keys = list(new_state_cells.keys())
+            new_state_keys = set(new_state_cells.keys())
             self.__alives = new_state_keys.__len__()
 
-            current_state_keys = list(self.cells.keys())
-            changed_keys = list(set(current_state_keys + new_state_keys))
+            current_state_keys = set(self.cells.keys())
+            changed_keys = (current_state_keys | new_state_keys)
 
             # delete cells 
-            for i in list(set(current_state_keys) - set(new_state_keys)):
+            for i in (current_state_keys - new_state_keys):
                 self.cells.pop(i)
-
+            #self.cells.clear()
             for i, cell in new_state_cells.items():
                 # TO DO: no need to use new cell ref if cell already exists, check needed
                 self.cells[i] = cell
@@ -228,7 +232,7 @@ class SquadField:
         dimension = self.get_dimension()
         self.cells.clear()
         for i in population_list:
-            self.cells[i]= Cell(True, i, dimension)
+            self.cells[i] = Cell(True, i, dimension)
         pass
     #end def
 #end class

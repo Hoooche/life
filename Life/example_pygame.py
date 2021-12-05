@@ -8,7 +8,7 @@ import sys
 def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
     indexes = indexes_to_refresh
     if indexes == None:
-        indexes = field.cells
+        indexes = field.cells.keys()
 
     for i in indexes:
 
@@ -29,7 +29,7 @@ def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
 fieldDimension = 5
 #startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
 
-#fieldDimension = 80
+fieldDimension = 80
 # R - pentamino for dimension 80
 #startPopulationList = [38*80+39, 39*80+39, 39*80+40, 40*80+38, 40*80 +39]
 
@@ -44,8 +44,7 @@ halfDimension = int(fieldDimension/2)
 # R - pentamino for dimension 80
 startPopulationList = [((halfDimension-1)*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension+1), ((halfDimension+1)*fieldDimension+halfDimension-1), ((halfDimension+1)*fieldDimension+halfDimension)]
 
-print(startPopulationList)
-#print('init life')
+print('Start position ', startPopulationList)
 
 myLifeField = life.SquadField(fieldDimension)
 myLifeField.populate(startPopulationList)
@@ -56,7 +55,6 @@ screen_caption = 'Life'
 
 cell_size = screen_height / fieldDimension
 
-#pygame.init()
 azure2 = pygame.Color('azure3')
 blueviolet = pygame.Color('blueviolet')
 
@@ -69,7 +67,6 @@ if display.get_init():
     
     drawFieldOnSurface(screen, myLifeField)
     display.flip()
-
 
     states = []
     circleOfLife = False
@@ -89,7 +86,7 @@ if display.get_init():
             changed_indexes = myLifeField.apply_state(new_state)
             drawFieldOnSurface(screen, myLifeField, changed_indexes)
 
-            display.set_caption(screen_caption + ' ' + str(len(states)))
+            display.set_caption(screen_caption + ': age ' + str(len(states)) + ', alives ' + str(myLifeField.get_alives()))
             
             if not (myLifeField.get_alives() > 0 and states.count(myLifeField.get_hash()) == 0):
                 circleOfLife = False
