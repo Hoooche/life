@@ -20,6 +20,9 @@
 Обдумать возможность альтернативного порядка обхода. 
 Например, случайного, или сначала все клетки с наибольшим количеством соседей или сначала все клетки с наименьшим...
 '''
+class Figures:
+    pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
+    glider = {0:(0,1,0), 1:(0,0,1), 2:(1,1,1)}
 
 class Cell:
     def __init__(self, is_alive, index, x_field_dimension, y_field_dimension = 0):
@@ -136,6 +139,18 @@ class SquadField:
         return neighbors
     #end def
 
+    def calc_figure_indexes(self, figure, start_x, start_y):      
+        indexes = []
+        for y, row in figure.items():
+            for x in range(len(row)):
+                if row[x] == 1:
+                    # TO DO add cycle field coords
+                    index = (start_y + y) * self.__dimension + start_x + x
+                    indexes.append(index)
+        return indexes
+        pass
+    #end def
+
     # return value - dict - {index : cell}
     def calc_state(self):
 
@@ -229,12 +244,17 @@ class SquadField:
     #end def
 
     def populate(self, population_list):
-        dimension = self.get_dimension()
-        self.cells.clear()
         for i in population_list:
-            self.cells[i] = Cell(True, i, dimension)
+            self.cells[i] = Cell(True, i, self.__dimension)
         pass
     #end def
+
+    def repopulate(self, population_list):
+        self.cells.clear()
+        self.populate(self, population_list)
+    #end def
+
+
 #end class
 
 if __name__ == '__main__':

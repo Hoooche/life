@@ -24,33 +24,32 @@ def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
         draw.rect(surface, cellColor, r, 0)
         
 
+#pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
+#glider = {0:(0,1,0), 1:(0,0,1), 2:(1,1,1)}
 
-
-fieldDimension = 5
-#startPopulationList = [2,5,6,7,9,10,12,13,17,18,20,22]
-
-fieldDimension = 80
-# R - pentamino for dimension 80
-#startPopulationList = [38*80+39, 39*80+39, 39*80+40, 40*80+38, 40*80 +39]
-
-fieldDimension = 10
-# R - pentamino for dimension 10
-#startPopulationList = [34,44,45,53,54]
-# R - glider for dimension 10
-startPopulationList = [1,12,20,21,22]
-
-fieldDimension = 480
-halfDimension = int(fieldDimension/2)
-# R - pentamino for dimension 80
-startPopulationList = [((halfDimension-1)*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension), (halfDimension*fieldDimension+halfDimension+1), ((halfDimension+1)*fieldDimension+halfDimension-1), ((halfDimension+1)*fieldDimension+halfDimension)]
-
-print('Start position ', startPopulationList)
-
+fieldDimension = 360
 myLifeField = life.SquadField(fieldDimension)
-myLifeField.populate(startPopulationList)
 
-screen_height = 480
-screen_width = 480
+halfDimension = int(fieldDimension/2)
+
+# R - pentamino in center
+pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension-1,halfDimension-1)
+myLifeField.populate(pentamino_indexes)
+
+pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2),int(halfDimension/2))
+myLifeField.populate(pentamino_indexes)
+
+pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension + int(halfDimension/2),int(halfDimension/2))
+myLifeField.populate(pentamino_indexes)
+
+pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2),int(halfDimension/2) + halfDimension)
+myLifeField.populate(pentamino_indexes)
+
+pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
+myLifeField.populate(pentamino_indexes)
+
+screen_height = 860
+screen_width = 860
 screen_caption = 'Life'
 
 cell_size = screen_height / fieldDimension
