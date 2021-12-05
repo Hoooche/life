@@ -32,6 +32,8 @@ myLifeField = life.SquadField(fieldDimension)
 
 halfDimension = int(fieldDimension/2)
 
+# R - galactic in center
+#pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.galactic, halfDimension-4,halfDimension-4)
 # R - pentamino in center
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension-1,halfDimension-1)
 myLifeField.populate(pentamino_indexes)
@@ -48,8 +50,8 @@ myLifeField.populate(pentamino_indexes)
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
 myLifeField.populate(pentamino_indexes)
 
-screen_height = 860
-screen_width = 860
+screen_height = 720
+screen_width = 720
 screen_caption = 'Life'
 
 cell_size = screen_height / fieldDimension
@@ -67,7 +69,7 @@ if display.get_init():
     drawFieldOnSurface(screen, myLifeField)
     display.flip()
 
-    states = []
+    states = set()
     circleOfLife = False
 
     while True:
@@ -83,14 +85,15 @@ if display.get_init():
         if circleOfLife:
             new_state = myLifeField.calc_state()
             changed_indexes = myLifeField.apply_state(new_state)
+            hash_state_set = set([myLifeField.get_hash()])
             drawFieldOnSurface(screen, myLifeField, changed_indexes)
 
             display.set_caption(screen_caption + ': age ' + str(len(states)) + ', alives ' + str(myLifeField.get_alives()))
             
-            if not (myLifeField.get_alives() > 0 and states.count(myLifeField.get_hash()) == 0):
+            if not (myLifeField.get_alives() > 0 and states.isdisjoint(hash_state_set)):
                 circleOfLife = False
             else:
-                states.append(myLifeField.get_hash())                
+                states.add(hash_state_set.pop())                
 
             display.flip()
 

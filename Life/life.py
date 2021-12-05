@@ -8,21 +8,18 @@
 при очередном шаге ни одна из клеток не меняет своего состояния (складывается стабильная конфигурация; предыдущее правило, вырожденное до одного шага назад)
 '''
 
-'''
-Характеристика "Желание жить" 
-2 из 3 клеток получают опыт увеличивающий эту характеристику (опыт рождения)
-Все клетки получают опыт уменьшающий эту харктеристику (опыт смерти)
-Есть минимальное значение характеристики, при достижении которого в случае когда вокруг анализируемой клетки есть только 1 клетка, 
-то умирают обе, одна от "одиночества", а другая от "депрессии".
-'''
-'''
-Порядок обхода клеток имеет значение. 
-Обдумать возможность альтернативного порядка обхода. 
-Например, случайного, или сначала все клетки с наибольшим количеством соседей или сначала все клетки с наименьшим...
-'''
 class Figures:
     pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
     glider = {0:(0,1,0), 1:(0,0,1), 2:(1,1,1)}
+    galactic = {0:(1,1,0,1,1,1,1,1,1),
+                1:(1,1,0,1,1,1,1,1,1),
+                2:(1,1,0,0,0,0,0,0,0),
+                3:(1,1,0,0,0,0,0,1,1),
+                4:(1,1,0,0,0,0,0,1,1),
+                5:(1,1,0,0,0,0,0,1,1),
+                6:(0,0,0,0,0,0,0,1,1),
+                7:(1,1,1,1,1,1,0,1,1),
+                8:(1,1,1,1,1,1,0,1,1)}
 
 class Cell:
     def __init__(self, is_alive, index, x_field_dimension, y_field_dimension = 0):
@@ -126,13 +123,13 @@ class SquadField:
 
     # return value - set - of neighbors indexes by (index)
     def get_neighbors_by_index(self, index, include_index = False):
-        neighbors = set()
-        cell = self.cells.get(index, None)
-        if cell == None:
-            neighbors = set(Cell.get_neighbors_by_index(index, self.__dimension))
-        else:
-            neighbors = set(cell.neighbors)
-        
+        #neighbors = set()
+        #cell = self.cells.get(index, None)
+        #if cell == None:
+        #    neighbors = set(Cell.get_neighbors_by_index(index, self.__dimension))
+        #else:
+        #    neighbors = set(cell.neighbors)
+        neighbors = set(Cell.get_neighbors_by_index(index, self.__dimension))
         if include_index:
             neighbors.add(index)
 
@@ -144,7 +141,7 @@ class SquadField:
         for y, row in figure.items():
             for x in range(len(row)):
                 if row[x] == 1:
-                    # TO DO add cycle field coords
+                    # TO DO add calculation for tor field coords
                     index = (start_y + y) * self.__dimension + start_x + x
                     indexes.append(index)
         return indexes
@@ -158,13 +155,11 @@ class SquadField:
         calculated_cells = set()
 
         current_state_keys = set(self.cells.keys())
-        for i, cell in self.cells.items():
+
+        for i in current_state_keys:
 
             cell_indexes = self.get_neighbors_by_index(i, True)
             for index in (cell_indexes - calculated_cells):
-
-                #if index in calculated_cells:
-                #    continue
   
                 neighbors = self.get_neighbors_by_index(index)
 
