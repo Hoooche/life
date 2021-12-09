@@ -12,7 +12,7 @@ def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
 
     for i in indexes:
 
-        x,y = life.Cell.get_coords_by_index(i, field.get_dimension())
+        x,y = life.Cell.get_xy_by_index(i, field.get_dimension())
         r = (x * cell_size, y * cell_size, cell_size, cell_size)
 
         cell = field.cells.get(i, None)
@@ -28,7 +28,7 @@ def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
 #glider = {0:(0,1,0), 1:(0,0,1), 2:(1,1,1)}
 
 fieldDimension = 360
-myLifeField = life.SquadField(fieldDimension)
+myLifeField = life.SquareField(fieldDimension)
 
 halfDimension = int(fieldDimension/2)
 
@@ -38,6 +38,7 @@ halfDimension = int(fieldDimension/2)
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension-1,halfDimension-1)
 myLifeField.populate(pentamino_indexes)
 
+'''
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2),int(halfDimension/2))
 myLifeField.populate(pentamino_indexes)
 
@@ -49,6 +50,7 @@ myLifeField.populate(pentamino_indexes)
 
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
 myLifeField.populate(pentamino_indexes)
+'''
 
 screen_height = 720
 screen_width = 720
