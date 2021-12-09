@@ -33,12 +33,11 @@ myLifeField = life.SquareField(fieldDimension)
 halfDimension = int(fieldDimension/2)
 
 # R - galactic in center
-#pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.galactic, halfDimension-4,halfDimension-4)
+#pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.koks_galaxy, halfDimension-4,halfDimension-4)
 # R - pentamino in center
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension-1,halfDimension-1)
 myLifeField.populate(pentamino_indexes)
 
-'''
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2),int(halfDimension/2))
 myLifeField.populate(pentamino_indexes)
 
@@ -50,7 +49,6 @@ myLifeField.populate(pentamino_indexes)
 
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
 myLifeField.populate(pentamino_indexes)
-'''
 
 screen_height = 720
 screen_width = 720
