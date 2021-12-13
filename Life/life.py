@@ -7,6 +7,7 @@
 конфигурация на очередном шаге в точности (без сдвигов и поворотов) повторит себя же на одном из более ранних шагов (складывается периодическая конфигурация)
 при очередном шаге ни одна из клеток не меняет своего состояния (складывается стабильная конфигурация; предыдущее правило, вырожденное до одного шага назад)
 '''
+from datetime import datetime
 
 class Figures:
     pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
@@ -99,8 +100,6 @@ class Cell:
         self.y = index // y_field_dimension
         self.x = index - self.y * x_field_dimension
 
-        #self.alive_neighbors = 0
-
         #tuple of some properties
         self.properties = properties if properties else {}
 
@@ -154,10 +153,8 @@ class Cell:
         neighbors.append(y_up * y_field_dimension + x_left)
         neighbors.append(y_up * y_field_dimension + x)
         neighbors.append(y_up * y_field_dimension + x_right)
-
         neighbors.append(y * y_field_dimension + x_left)
         neighbors.append(y * y_field_dimension + x_right)
-
         neighbors.append(y_down * y_field_dimension + x_left)
         neighbors.append(y_down * y_field_dimension + x)
         neighbors.append(y_down * y_field_dimension + x_right)
@@ -170,17 +167,15 @@ class Cell:
 class SquareField:
     __dimension = 0
     __alives = 0
-    __hash = 0
-
-    # list of alive indexes, need to calc hash, keep sorted
-    __alive_indexes = []
+    __keep_history = True
+    # history of field`s cells activity
+    __history = []
 
     # tuple {index(int) : alives_count(int))}
     # for each index alives must be calculated, includes neighbors and alive cells
     __calculated_cells = {}
  
     # tuple {index : Cell} # old redaction, only alives
-    #__cells = {}
     cells = {}
 
     def __init__(self, dimension, start_position = []):
@@ -189,9 +184,11 @@ class SquareField:
         self.populate(start_position)
     #end def
 
+    # for internal use only - very slow
     def __hash__(self):
-        self.__alive_indexes.sort()
-        self.__hash = hash(tuple(self.__alive_indexes))
+        __alive_indexes = list(self.cells.keys())
+        __alive_indexes.sort()
+        return tuple(__alive_indexes).__hash__()
     #end def
             
     def __update_calculated_cells_by_index__(self, index):
@@ -203,12 +200,12 @@ class SquareField:
         return self.__dimension
     def get_alives(self):
         return self.__alives
-    def get_alive_indexes(self):
-        return self.__alive_indexes
+    def get_history(self):
+        return self.__history
+    def get_history_count(self):
+        return len(self.__history)
     def get_cells(self):
         return self.cells
-    def get_hash(self):
-        return self.__hash
 
     # return set of neighbors indexes by (x,y)
     def get_neighbors_by_xy(self, x, y):
@@ -261,16 +258,14 @@ class SquareField:
     #end def
 
     # return value - set - indexes that was changed
-    def apply_state(self, new_state_cells):
+    # old version (calculated pentamo at 360*360 for 53 seconds)
+    def apply_state_old(self, new_state_cells):
 
-        self.__alive_indexes = list(new_state_cells.keys())
-        self.__alives = self.__alive_indexes.__len__()
-
-        new_state_keys = set(self.__alive_indexes)
+        new_state_keys = set(new_state_cells.keys())
         current_state_keys = set(self.cells.keys())
 
         changed_keys = (current_state_keys | new_state_keys)
-
+ 
         self.cells.clear()
         self.__calculated_cells.clear()
         
@@ -278,9 +273,60 @@ class SquareField:
             self.cells[i] = cell
             self.__update_calculated_cells_by_index__(i)
 
-        self.__hash__()
+        self.__alives = new_state_keys.__len__()
+
+        if self.__keep_history:
+            self.__history.append(new_state_keys)
 
         return changed_keys
+    #end def
+
+    # new version (calculated pentamo at 360*360 for 36 seconds)
+    def apply_state(self, new_state_cells):
+
+        new_state_keys = set(new_state_cells.keys())
+        current_state_keys = set(self.cells.keys())
+
+        new_keys = (new_state_keys - current_state_keys)
+        #add new keys to cells
+        for i, cell in new_state_cells.items():
+            self.cells[i] = cell
+            if i in new_keys:
+                self.__calculated_cells[i] = self.__calculated_cells.get(i, 0)
+                for key in cell.neighbors:
+                    self.__calculated_cells[key] = self.__calculated_cells.get(key, 0) + 1
+
+        # delete keys from cells
+        # find __calculatetd_cells for delete 
+        delete_calculated_cells = set()
+        for i in (current_state_keys - new_state_keys):
+            cell = self.cells.pop(i)
+            #cell_neighbors = cell.neighbors.copy()
+            #cell_neighbors.append(i)
+            cell.neighbors.append(i)
+            for key in cell.neighbors:
+                key_value = self.__calculated_cells.get(key, 0) - (1 if key != i else 0)
+                self.__calculated_cells[key] = key_value
+                if key_value == 0:
+                    delete_calculated_cells.add(key)
+
+        for i in (delete_calculated_cells - new_state_keys):
+            self.__calculated_cells.pop(i)
+
+        self.__alives = new_state_keys.__len__()
+
+        if self.__keep_history:
+            self.__history.append(new_state_keys)
+
+        return (new_state_keys | current_state_keys)
+                    
+    #end def
+
+    def applyable_state(self, new_state_cells):
+        new_state_keys = set(new_state_cells.keys())
+        applyable = len(new_state_keys) > 0 and new_state_keys not in self.__history
+        return applyable
+        pass
     #end def
 
     # TO DO statements of population set some properties of cells
@@ -292,31 +338,19 @@ class SquareField:
                 continue
 
             self.cells[i] = Cell(True, i, self.__dimension, self.__dimension, properties)
-            self.__alive_indexes.append(i)
 
             self.__update_calculated_cells_by_index__(i)
 
-        self.__alives = len(self.__alive_indexes)
-        self.__hash__()
+        self.__alives = len(self.cells.keys())
         pass
     #end def
 
     def repopulate(self, population_list, properties = None):
-        self.cells.clear()
-        self.__alive_indexes.clear()
+        self.cells.clear()        
         self.__calculated_cells.clear()
-        self.__alives = 0
-        self.__hash = 0
+        self.__history.clear()
+        self.__alives = 0        
         self.populate(self, population_list, properties)
-    #end def
-
-    # return value - int
-    def calc_state_hash(self):
-        # to get correct hash sort is needed 
-        # hash is calculating only for property 'is_alive'
-        state_keys = list(self.cells.keys())
-        state_keys.sort()
-        return tuple(state_keys).__hash__()
     #end def
 
     def print(self, show_index = False):
@@ -338,37 +372,37 @@ class SquareField:
 
 #end class
 
+
 if __name__ == '__main__':
+    
+    start_time = datetime.now()
 
-    t = {0:{0: 0, 1: 0, 2: 0}, 1:{0: 0, 1: 0, 2: 0}, 2:{0: 0, 1: 0, 2: 0}}
-    '''
-    for (i, item) in t.items():
-        #for j in i.items():
-        print(i)
-        #for j in i.values():
-        #    print(j)
-    '''
+    s0 = set([9,2,5,6,7,8])
+    s1 = set([5,2,6,1,7,3])
 
+    print(s0-s1, s1-s0, s0|s1)
+
+    print('Init life at', start_time)
 
     field_dimension = 10
-    #start_population_list = [2,5,6,7,9,10,12,17,18,20]
-
-    # R - pentamino for dimension 10
-    start_population_list = [34,44,45,53,54]
-    # R - glider for dimension 10
-    start_population_list = [1,12,20,21,22]
-
-    print('init life')
 
     field = SquareField(field_dimension)
     print('dimension: ' , field.get_dimension())
     field.print(True) 
     print('populate field')
-     
-    print("state 0")
+
+    # R - pentamino for dimension 10
+    #[34,44,45,53,54]
+    start_population_list = field.calc_figure_indexes(Figures.pentamino, field_dimension/2-1, field_dimension/2-1) 
+    # R - glider for dimension 10
+    #[1,12,20,21,22]
+    start_population_list = field.calc_figure_indexes(Figures.glider, 0, 0)
+
+    #start_population_list = field.calc_figure_indexes(Figures.block, 0, 0) + field.calc_figure_indexes(Figures.block, 3, 0)
+
     field.populate(start_population_list)
+    print("age: 0", 'alives:', field.get_alives())
     field.print()
-    print(field.get_alives(), field.get_hash())
 
     #print(field.get_neighbors(0,0))
     #print(field.get_neighbors(1,0))    
@@ -384,22 +418,18 @@ if __name__ == '__main__':
     [19, 10, 11, 29, 21, 39, 30, 31]
     '''
 
-    states = []
     circleOfLife = True
 
     while circleOfLife:
         new_state = field.calc_state()
-        field.apply_state(new_state)        
-        print('----------')
-        print(field.get_alives(), field.get_hash())
-        field.print()
-        if not (field.get_alives() > 0 and states.count(field.get_hash()) == 0):
-            circleOfLife = False
-
-        states.append(field.get_hash())
+        circleOfLife = field.applyable_state(new_state)
+        if circleOfLife:
+            field.apply_state(new_state)
+            print('age: ', field.get_history_count(), 'alives:', field.get_alives())
+            field.print()
+       
         pass
 
-    print('----------')
-    print('Count od states: ', len(states))
-    print('Population: ', field.get_alives())
-
+    stop_time = datetime.now()
+    print('Finished at ', stop_time)
+    print('----------', (stop_time-start_time))

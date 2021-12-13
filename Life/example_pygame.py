@@ -37,7 +37,7 @@ halfDimension = int(fieldDimension/2)
 # R - pentamino in center
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, halfDimension-1,halfDimension-1)
 myLifeField.populate(pentamino_indexes)
-
+#'''
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2),int(halfDimension/2))
 myLifeField.populate(pentamino_indexes)
 
@@ -49,7 +49,7 @@ myLifeField.populate(pentamino_indexes)
 
 pentamino_indexes = myLifeField.calc_figure_indexes(life.Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
 myLifeField.populate(pentamino_indexes)
-
+#'''
 screen_height = 720
 screen_width = 720
 screen_caption = 'Life'
@@ -69,7 +69,6 @@ if display.get_init():
     drawFieldOnSurface(screen, myLifeField)
     display.flip()
 
-    states = set()
     circleOfLife = False
 
     while True:
@@ -84,18 +83,14 @@ if display.get_init():
 
         if circleOfLife:
             new_state = myLifeField.calc_state()
-            changed_indexes = myLifeField.apply_state(new_state)
-            hash_state_set = set([myLifeField.get_hash()])
-            drawFieldOnSurface(screen, myLifeField, changed_indexes)
 
-            display.set_caption(screen_caption + ': age ' + str(len(states)) + ', alives ' + str(myLifeField.get_alives()))
-            
-            if not (myLifeField.get_alives() > 0 and states.isdisjoint(hash_state_set)):
-                circleOfLife = False
-            else:
-                states.add(hash_state_set.pop())                
+            circleOfLife = myLifeField.applyable_state(new_state)
+            if circleOfLife:
+                changed_indexes = myLifeField.apply_state(new_state)
+                drawFieldOnSurface(screen, myLifeField, changed_indexes)
 
-            display.flip()
+                display.set_caption(screen_caption + ': age ' + str(myLifeField.get_history_count()) + ', alives ' + str(myLifeField.get_alives()))
+                display.flip()
 
                    
 
