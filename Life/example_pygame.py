@@ -1,28 +1,40 @@
 import pygame
-from pygame import display as display
+from pygame import Rect, display as display
 from pygame import draw as draw
 from pygame import event as event
 import life
 import sys
+import logging
 
 def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
+ 
     indexes = indexes_to_refresh
     if indexes == None:
         indexes = field.cells.keys()
 
     for i in indexes:
-
-        x,y = life.Cell.get_xy_by_index(i, field.get_dimension())
-        r = (x * cell_size, y * cell_size, cell_size, cell_size)
-
         cell = field.cells.get(i, None)
 
         cellColor = azure2
         if not cell == None and cell.is_alive:
             cellColor = blueviolet
-            
-        draw.rect(surface, cellColor, r, 0)
+
+        x,y = life.Cell.get_xy_by_index(i, field.get_dimension())
+        rect = Rect(x * cell_size, y * cell_size, cell_size, cell_size)
+
+        draw.rect(surface, cellColor, rect, 0)
+
         
+#logging.basicConfig(filename="D:\myPy\Life\log\life.log", level=logging.INFO)
+logger = logging.getLogger("exampleApp")
+logger.setLevel(logging.INFO)
+
+fh = logging.FileHandler("D:\myPy\Life\log\life.log", 'w+')
+formatter = logging.Formatter('%(asctime)s - %(message)s')
+fh.setFormatter(formatter)
+
+# add handler to logger object
+logger.addHandler(fh)
 
 #pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
 #glider = {0:(0,1,0), 1:(0,0,1), 2:(1,1,1)}
@@ -65,7 +77,8 @@ if display.get_init():
     screen = display.set_mode((screen_width, screen_height))
     
     screen.fill(azure2, )
-    
+    rects = {}
+
     drawFieldOnSurface(screen, myLifeField)
     display.flip()
 
@@ -82,15 +95,26 @@ if display.get_init():
                     circleOfLife = not circleOfLife
 
         if circleOfLife:
-            new_state = myLifeField.calc_state()
-
+            logger.info("start calc_state")
+            new_state = myLifeField.calc_state(logger)
+            logger.info("stop calc_state")
+            logger.info("start applyable_state")
             circleOfLife = myLifeField.applyable_state(new_state)
+            logger.info("stop applyable_state")
             if circleOfLife:
+                logger.info("start apply_state")
                 changed_indexes = myLifeField.apply_state(new_state)
+                logger.info("stop apply_state")
+
+                logger.info("start drawFieldOnSurface")
                 drawFieldOnSurface(screen, myLifeField, changed_indexes)
+                logger.info("stop drawFieldOnSurface")
 
                 display.set_caption(screen_caption + ': age ' + str(myLifeField.get_history_count()) + ', alives ' + str(myLifeField.get_alives()))
+                logger.info("start flip")
+                
                 display.flip()
+                logger.info("stop flip")
 
                    
 

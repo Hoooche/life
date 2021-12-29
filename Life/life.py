@@ -8,6 +8,7 @@
 при очередном шаге ни одна из клеток не меняет своего состояния (складывается стабильная конфигурация; предыдущее правило, вырожденное до одного шага назад)
 '''
 from datetime import datetime
+from logging import Logger
 
 class Figures:
     pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
@@ -90,6 +91,7 @@ class Figures:
                    8:(0,0,0,0,0,0,0,0,0)}
 
 class Cell:
+    __slots__ = ['is_alive', 'index', 'x', 'y', 'properties', 'neighbors']
     def __init__(self, is_alive, index, x_field_dimension, y_field_dimension = 0, properties = None):
         self.is_alive = is_alive
         self.index = index
@@ -165,6 +167,7 @@ class Cell:
 #end class
 
 class SquareField:
+
     __dimension = 0
     __alives = 0
     __keep_history = True
@@ -206,6 +209,10 @@ class SquareField:
         return len(self.__history)
     def get_cells(self):
         return self.cells
+    def get_is_alive_by_index(self, index):
+        cell = self.cells.get(index, None)
+        return False if cell == None else cell.is_alive 
+        
 
     # return set of neighbors indexes by (x,y)
     def get_neighbors_by_xy(self, x, y):
@@ -238,21 +245,33 @@ class SquareField:
     #end def
 
     # return value - dict - {index : cell}
-    def calc_state(self):
+    def calc_state(self, logger = None):
+
+        items = self.__calculated_cells.items()
+        if logger:
+            logger.info('calc_state begin: to calc:' + str(len(items)) + ', alives: ' + str(len(self.cells)) )
 
         new_state_cells = {}
-        for index, alive_neighbors_count in self.__calculated_cells.items():
-            cell = self.cells.get(index, None)
-            old_state = False if cell == None else cell.is_alive
-            new_state = old_state
+        for index, alive_neighbors_count in items:
+            
+            #cell = self.cells.get(index, None)
+            #cell = Cell(False, index, self.__dimension, self.__dimension, {}) if cell == None else cell.copy()
+
+            new_state = self.get_is_alive_by_index(index)
             if (new_state and not alive_neighbors_count in [2,3]) or (not new_state and alive_neighbors_count == 3):
                 new_state = not new_state
 
             # TO DO 
             # add other conditions
             if new_state:
-                new_state_cells[index] = Cell(True, index, self.__dimension, self.__dimension, {}) if cell == None else cell.copy()            
-
+                #new_state_cells[index] = Cell(True, index, self.__dimension, self.__dimension, {}) if cell == None else cell.copy()            
+                new_state_cells[index] = Cell(True, index, self.__dimension, self.__dimension, {})
+                #cell.is_alive = True
+                #new_state_cells[index] = cell
+            
+        if logger:
+            logger.info('calc_state end ' + str(len(new_state_cells) ))
+           
         return new_state_cells
         pass
     #end def
