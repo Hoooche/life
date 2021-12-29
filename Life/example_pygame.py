@@ -25,11 +25,11 @@ def drawFieldOnSurface(surface, field, indexes_to_refresh = None):
         draw.rect(surface, cellColor, rect, 0)
 
         
-#logging.basicConfig(filename="D:\myPy\Life\log\life.log", level=logging.INFO)
 logger = logging.getLogger("exampleApp")
 logger.setLevel(logging.INFO)
 
-fh = logging.FileHandler("D:\myPy\Life\log\life.log", 'w+')
+# rewrites log file in a work directory
+fh = logging.FileHandler(__file__[__file__.rfind('/')+1:__file__.rfind('.')] +'.log' , 'w+')
 formatter = logging.Formatter('%(asctime)s - %(message)s')
 fh.setFormatter(formatter)
 
