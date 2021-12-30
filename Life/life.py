@@ -8,6 +8,7 @@
 при очередном шаге ни одна из клеток не меняет своего состояния (складывается стабильная конфигурация; предыдущее правило, вырожденное до одного шага назад)
 '''
 from datetime import datetime
+import timeit
 
 class Figures:
     pentamino = {0:(0,1,0), 1:(0,1,1), 2:(1,1,0)}
@@ -206,6 +207,9 @@ class SquareField:
         return len(self.__history)
     def get_cells(self):
         return self.cells
+    def get_calculated_cells_count(self):
+        return self.__calculated_cells.__len__()
+
 
     # return set of neighbors indexes by (x,y)
     def get_neighbors_by_xy(self, x, y):
@@ -294,7 +298,15 @@ class SquareField:
             if i in new_keys:
                 self.__calculated_cells[i] = self.__calculated_cells.get(i, 0)
                 for key in cell.neighbors:
-                    self.__calculated_cells[key] = self.__calculated_cells.get(key, 0) + 1
+                   self.__calculated_cells[key] = self.__calculated_cells.get(key, 0) + 1
+
+        #self.cells.clear()
+        #self.cells = new_state_cells
+
+        #for i in (new_state_keys - current_state_keys):
+        #   self.__calculated_cells[i] = self.__calculated_cells.get(i, 0)
+        #    for key in self.cells[i].neighbors:
+        #        self.__calculated_cells[key] = self.__calculated_cells.get(key, 0) + 1
 
         # delete keys from cells
         # find __calculatetd_cells for delete 
@@ -305,6 +317,7 @@ class SquareField:
             #cell_neighbors.append(i)
             cell.neighbors.append(i)
             for key in cell.neighbors:
+            #for key in self.get_neighbors_by_index(i, True):
                 key_value = self.__calculated_cells.get(key, 0) - (1 if key != i else 0)
                 self.__calculated_cells[key] = key_value
                 if key_value == 0:
@@ -372,15 +385,49 @@ class SquareField:
 
 #end class
 
+def test_pentamino():
+    field_dimension = 360
+
+    field = SquareField(field_dimension)
+    halfDimension = int(field_dimension/2)
+
+    pentamino_indexes = field.calc_figure_indexes(Figures.pentamino, halfDimension-1,halfDimension-1)
+    field.populate(pentamino_indexes)
+    #'''
+    pentamino_indexes = field.calc_figure_indexes(Figures.pentamino, int(halfDimension/2),int(halfDimension/2))
+    field.populate(pentamino_indexes)
+
+    pentamino_indexes = field.calc_figure_indexes(Figures.pentamino, halfDimension + int(halfDimension/2),int(halfDimension/2))
+    field.populate(pentamino_indexes)
+
+    pentamino_indexes = field.calc_figure_indexes(Figures.pentamino, int(halfDimension/2),int(halfDimension/2) + halfDimension)
+    field.populate(pentamino_indexes)
+
+    pentamino_indexes = field.calc_figure_indexes(Figures.pentamino, int(halfDimension/2) + halfDimension,int(halfDimension/2) + halfDimension)
+    field.populate(pentamino_indexes)
+    #'''
+    circleOfLife = True
+
+    while circleOfLife:
+        new_state = field.calc_state()
+        circleOfLife = field.applyable_state(new_state)
+
+        if circleOfLife:
+            field.apply_state(new_state)
+
+        if field.get_history_count() % 500 == 0 or not circleOfLife:
+            print("age:", field.get_history_count(), "alives:", field.get_alives(), "calculated:", field.get_calculated_cells_count())
+        pass
+#end def 
+
 
 if __name__ == '__main__':
     
+    #elapsed = timeit.timeit(test_pentamino, number = 1)
+    #print(elapsed)
+    #exit()
+
     start_time = datetime.now()
-
-    s0 = set([9,2,5,6,7,8])
-    s1 = set([5,2,6,1,7,3])
-
-    print(s0-s1, s1-s0, s0|s1)
 
     print('Init life at', start_time)
 
